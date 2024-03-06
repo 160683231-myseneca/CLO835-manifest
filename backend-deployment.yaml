@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  namespace: sqldb
+  labels:
+    app: mysql
+    component: backend
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+      component: backend
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: mysql
+        component: backend
+    spec:
+      containers:
+      - name: mysql
+        image: 636276102612.dkr.ecr.us-east-1.amazonaws.com/mysql_image
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "pw"
+        - name: DATABASE
+          value: "employees"
+        ports:
+        - containerPort: 3306
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi

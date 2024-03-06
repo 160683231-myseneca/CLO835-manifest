@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  namespace: webapp
+  labels:
+    app: myapp
+    component: frontend
+    # version: {{APP_VERSION}}
+    color: blue
+spec:
+  selector:
+    matchLabels:
+      app: myapp
+      component: frontend
+      # version: {{APP_VERSION}}
+      color: blue
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: myapp
+        component: frontend
+        # version: {{APP_VERSION}}
+        color: blue
+    spec:
+      containers:
+      - name: myapp
+        image: 636276102612.dkr.ecr.us-east-1.amazonaws.com/app_v1_image
+        env:
+        - name: DBHOST
+          value: "mysql.sqldb.svc.cluster.local"
+        - name: DBPORT
+          value: "3306"
+        - name: DBUSER
+          value: "root"
+        - name: DBPWD
+          value: "pw"
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
