@@ -1,31 +1,31 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: myapp
+  name: myapp-{{APP_COLOR}}
   namespace: webapp
   labels:
-    app: myapp
+    app: employees
     component: frontend
     # version: {{APP_VERSION}}
-    color: blue
+    color: {{APP_COLOR}}
 spec:
   selector:
     matchLabels:
-      app: myapp
+      app: employees
       component: frontend
       # version: {{APP_VERSION}}
-      color: blue
+      color: {{APP_COLOR}}
   replicas: 1
   template:
     metadata:
       labels:
-        app: myapp
+        app: employees
         component: frontend
         # version: {{APP_VERSION}}
-        color: blue
+        color: {{APP_COLOR}}
     spec:
       containers:
-      - name: myapp
+      - name: myapp-{{APP_COLOR}}
         image: 636276102612.dkr.ecr.us-east-1.amazonaws.com/app_v1_image
         env:
         - name: DBHOST
@@ -36,6 +36,8 @@ spec:
           value: "root"
         - name: DBPWD
           value: "pw"
+        - name: APP_COLOR
+          value: {{APP_COLOR}}
         ports:
         - containerPort: 8080
         resources:

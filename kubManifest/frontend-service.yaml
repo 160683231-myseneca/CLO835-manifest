@@ -1,19 +1,19 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: myapp
+  name: myapp-{{APP_COLOR}}
   namespace: webapp
   labels:
-    app: myapp
+    app: employees
     component: frontend
     # version: {{APP_VERSION}}
-    color: blue
+    color: {{APP_COLOR}}
 spec:
   ports:
   - port: 80
     targetPort: 8080
   selector:
-    app: myapp
+    app: employees
     component: frontend
     # version: {{APP_VERSION}}
-    color: blue
+    color: {{APP_COLOR}}

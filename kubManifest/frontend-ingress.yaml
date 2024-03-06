@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: myapp-ingress
+  namespace: webapp
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /blue(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: myapp-blue
+            port:
+              number: 80
+      - path: /pink(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: myapp-pink
+            port:
+              number: 80
+      - path: /lime(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: myapp-lime
+            port:
+              number: 80
