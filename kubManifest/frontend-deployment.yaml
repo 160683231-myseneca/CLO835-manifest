@@ -26,16 +26,15 @@ spec:
     spec:
       containers:
       - name: myapp-{{APP_COLOR}}
-        image: 636276102612.dkr.ecr.us-east-1.amazonaws.com/app_v1_image
+        image: 636276102612.dkr.ecr.us-east-1.amazonaws.com/app_image
         env:
         - name: DBHOST
           value: "mysql.sqldb.svc.cluster.local"
-        - name: DBPORT
-          value: "3306"
-        - name: DBUSER
-          value: "root"
         - name: DBPWD
-          value: "pw"
+          valueFrom:
+            secretKeyRef:
+              name: mydb-secret
+              key: password
         - name: APP_COLOR
           value: {{APP_COLOR}}
         ports:

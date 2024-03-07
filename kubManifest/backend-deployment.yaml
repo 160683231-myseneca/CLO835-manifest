@@ -23,9 +23,10 @@ spec:
         image: 636276102612.dkr.ecr.us-east-1.amazonaws.com/mysql_image
         env:
         - name: MYSQL_ROOT_PASSWORD
-          value: "pw"
-        - name: DATABASE
-          value: "employees"
+          valueFrom:
+            secretKeyRef:
+              name: mydb-secret
+              key: password
         ports:
         - containerPort: 3306
         resources:

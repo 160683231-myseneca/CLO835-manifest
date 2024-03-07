@@ -4,29 +4,29 @@ metadata:
   name: myapp-ingress
   namespace: webapp
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   rules:
   - http:
       paths:
       - path: /blue(/|$)(.*)
-        pathType: Prefix
+        pathType: ImplementationSpecific
         backend:
           service:
             name: myapp-blue
             port:
               number: 80
       - path: /pink(/|$)(.*)
-        pathType: Prefix
+        pathType: ImplementationSpecific
         backend:
           service:
             name: myapp-pink
             port:
               number: 80
-      - path: /lime(/|$)(.*)
-        pathType: Prefix
+      - path: /
+        pathType: ImplementationSpecific
         backend:
           service:
-            name: myapp-lime
+            name: myapp-red
             port:
               number: 80

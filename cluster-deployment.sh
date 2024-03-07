@@ -1,4 +1,16 @@
 #!/bin/bash
+create_ns_secrets(){
+  echo "Creating namespaces..."
+  kubectl create ns sqldb
+  kubectl create ns webapp
+  
+  echo "Creating secrets"
+  echo "Enter MySQL root password:"
+  read -s MYSQL_ROOT_PASSWORD
+  
+  kubectl create secret generic mydb-secret --from-literal=password="$MYSQL_ROOT_PASSWORD" -n sqldb  
+  kubectl create secret generic mydb-secret --from-literal=password="$MYSQL_ROOT_PASSWORD" -n webapp  
+}
 
 start_pod(){
   echo "Starting pods..."
@@ -13,11 +25,9 @@ start_deployment() {
 
   echo "Creating cluster..."
   kind create cluster --config kind-nodeport.yaml
- 
-  echo "Creating namespaces..."
-  kubectl create ns sqldb
-  kubectl create ns webapp
   
+  create_secrets 
+
   echo "Creating backend deployment..."
   kubectl apply -f kubManifest/backend-deployment.yaml -n sqldb
   echo "Creating backend clusterIP service..."
@@ -28,17 +38,14 @@ start_deployment() {
   # For each app color version
   sed 's/{{APP_COLOR}}/blue/g' kubManifest/frontend-deployment.yaml | kubectl apply -f - -n webapp
   sed 's/{{APP_COLOR}}/pink/g' kubManifest/frontend-deployment.yaml | kubectl apply -f - -n webapp
-  sed 's/{{APP_COLOR}}/lime/g' kubManifest/frontend-deployment.yaml | kubectl apply -f - -n webapp
   
   echo "Creating frontend clusterIP services..."
   sed 's/{{APP_COLOR}}/blue/g' kubManifest/frontend-service.yaml | kubectl apply -f - -n webapp
   sed 's/{{APP_COLOR}}/pink/g' kubManifest/frontend-service.yaml | kubectl apply -f - -n webapp
-  sed 's/{{APP_COLOR}}/lime/g' kubManifest/frontend-service.yaml | kubectl apply -f - -n webapp
   
   echo "Creating frontend NodePort services..."
   sed 's/{{APP_COLOR}}/blue/g; s/{{APP_CONTAINER}}/30010/g' kubManifest/frontend-NodePort.yaml | kubectl apply -f - -n webapp
   sed 's/{{APP_COLOR}}/pink/g; s/{{APP_CONTAINER}}/30100/g' kubManifest/frontend-NodePort.yaml | kubectl apply -f - -n webapp
-  sed 's/{{APP_COLOR}}/lime/g; s/{{APP_CONTAINER}}/31000/g' kubManifest/frontend-NodePort.yaml | kubectl apply -f - -n webapp
 }
 
 start_ingress() {
@@ -51,9 +58,7 @@ start_ingress() {
   kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
   kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=90s
  
-  echo "Creating namespaces..."
-  kubectl create ns sqldb
-  kubectl create ns webapp
+  create_secrets 
   
   echo "Creating backend deployment..."
   kubectl apply -f kubManifest/backend-deployment.yaml -n sqldb
@@ -65,12 +70,12 @@ start_ingress() {
   # For each app color version
   sed 's/{{APP_COLOR}}/blue/g' kubManifest/frontend-deployment.yaml | kubectl apply -f - -n webapp
   sed 's/{{APP_COLOR}}/pink/g' kubManifest/frontend-deployment.yaml | kubectl apply -f - -n webapp
-  sed 's/{{APP_COLOR}}/lime/g' kubManifest/frontend-deployment.yaml | kubectl apply -f - -n webapp
+  sed 's/{{APP_COLOR}}/red/g' kubManifest/frontend-deployment.yaml | kubectl apply -f - -n webapp
   
   echo "Creating frontend clusterIP services..."
   sed 's/{{APP_COLOR}}/blue/g' kubManifest/frontend-service.yaml | kubectl apply -f - -n webapp
   sed 's/{{APP_COLOR}}/pink/g' kubManifest/frontend-service.yaml | kubectl apply -f - -n webapp
-  sed 's/{{APP_COLOR}}/lime/g' kubManifest/frontend-service.yaml | kubectl apply -f - -n webapp
+  sed 's/{{APP_COLOR}}/red/g' kubManifest/frontend-service.yaml | kubectl apply -f - -n webapp
 
   echo "Creating frontend ingress service..."
   kubectl apply -f kubManifest/frontend-ingress.yaml -n webapp
