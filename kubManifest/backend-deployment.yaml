@@ -1,25 +1,28 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mysql
+  name: mysql-db
   namespace: sqldb
   labels:
-    app: mysql
-    component: backend
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/part-of: mywebapp
 spec:
   selector:
     matchLabels:
-      app: mysql
-      component: backend
-  replicas: 1
+      app.kubernetes.io/name: mysql
+      app.kubernetes.io/component: backend
+      app.kubernetes.io/part-of: mywebapp
+  replicas: 1  
   template:
     metadata:
       labels:
-        app: mysql
-        component: backend
+        app.kubernetes.io/name: mysql
+        app.kubernetes.io/component: backend
+        app.kubernetes.io/part-of: mywebapp
     spec:
       containers:
-      - name: mysql
+      - name: mysql-pod
         image: 636276102612.dkr.ecr.us-east-1.amazonaws.com/mysql_image
         env:
         - name: MYSQL_ROOT_PASSWORD

@@ -13,20 +13,20 @@ spec:
         pathType: ImplementationSpecific
         backend:
           service:
-            name: myapp-blue
+            name: myapp-svc-blue
             port:
               number: 80
       - path: /pink(/|$)(.*)
         pathType: ImplementationSpecific
         backend:
           service:
-            name: myapp-pink
+            name: myapp-svc-pink
             port:
               number: 80
       - path: /
         pathType: ImplementationSpecific
         backend:
           service:
-            name: myapp-red
+            name: myapp-svc-red
             port:
               number: 80

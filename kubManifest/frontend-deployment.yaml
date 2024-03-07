@@ -4,32 +4,35 @@ metadata:
   name: myapp-{{APP_COLOR}}
   namespace: webapp
   labels:
-    app: employees
-    component: frontend
-    # version: {{APP_VERSION}}
-    color: {{APP_COLOR}}
+    app.kubernetes.io/name: myapp
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/part-of: mywebapp
+    app.kubernetes.io/instance: myapp-{{APP_COLOR}}
+    app.kubernetes.io/version: "v1"
 spec:
+  replicas: 1
   selector:
     matchLabels:
-      app: employees
-      component: frontend
-      # version: {{APP_VERSION}}
-      color: {{APP_COLOR}}
-  replicas: 1
+      app.kubernetes.io/name: myapp
+      app.kubernetes.io/component: frontend
+      app.kubernetes.io/part-of: mywebapp
+      app.kubernetes.io/instance: myapp-{{APP_COLOR}}
+      app.kubernetes.io/version: "v1"
   template:
     metadata:
       labels:
-        app: employees
-        component: frontend
-        # version: {{APP_VERSION}}
-        color: {{APP_COLOR}}
+        app.kubernetes.io/name: myapp
+        app.kubernetes.io/component: frontend
+        app.kubernetes.io/part-of: mywebapp
+        app.kubernetes.io/instance: myapp-{{APP_COLOR}}
+        app.kubernetes.io/version: "v1"
     spec:
       containers:
-      - name: myapp-{{APP_COLOR}}
+      - name: myapp-pod-{{APP_COLOR}}
         image: 636276102612.dkr.ecr.us-east-1.amazonaws.com/app_image
         env:
         - name: DBHOST
-          value: "mysql.sqldb.svc.cluster.local"
+          value: "mysql-service.sqldb.svc.cluster.local"
         - name: DBPWD
           valueFrom:
             secretKeyRef:

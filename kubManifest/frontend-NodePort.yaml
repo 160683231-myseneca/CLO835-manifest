@@ -1,12 +1,14 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: myapp-{{APP_COLOR}}
+  name: myapp-nodeport-{{APP_COLOR}}
   namespace: webapp
   labels:
-    app: employees
-    component: frontend
-    color: {{APP_COLOR}}
+    app.kubernetes.io/name: myapp
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/part-of: mywebapp
+    app.kubernetes.io/instance: myapp-{{APP_COLOR}}
+    app.kubernetes.io/version: "v1"
 spec:
   type: NodePort
   ports:
@@ -14,6 +16,8 @@ spec:
       targetPort: 8080
       nodePort: {{APP_CONTAINER}}
   selector:
-    app: employees
-    component: frontend
-    color: {{APP_COLOR}}
+    app.kubernetes.io/name: myapp
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/part-of: mywebapp
+    app.kubernetes.io/instance: myapp-{{APP_COLOR}}
+    app.kubernetes.io/version: "v1"

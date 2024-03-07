@@ -26,7 +26,7 @@ start_deployment() {
   echo "Creating cluster..."
   kind create cluster --config kind-nodeport.yaml
   
-  create_secrets 
+  create_ns_secrets 
 
   echo "Creating backend deployment..."
   kubectl apply -f kubManifest/backend-deployment.yaml -n sqldb
@@ -44,8 +44,11 @@ start_deployment() {
   sed 's/{{APP_COLOR}}/pink/g' kubManifest/frontend-service.yaml | kubectl apply -f - -n webapp
   
   echo "Creating frontend NodePort services..."
+  
   sed 's/{{APP_COLOR}}/blue/g; s/{{APP_CONTAINER}}/30010/g' kubManifest/frontend-NodePort.yaml | kubectl apply -f - -n webapp
   sed 's/{{APP_COLOR}}/pink/g; s/{{APP_CONTAINER}}/30100/g' kubManifest/frontend-NodePort.yaml | kubectl apply -f - -n webapp
+  echo "Blue app avalaible at <ip>:30010"
+  echo "Pink app avalaible at <ip>:30100"
 }
 
 start_ingress() {
@@ -53,18 +56,13 @@ start_ingress() {
 
   echo "Creating cluster..."
   kind create cluster --config kind-ingress.yaml
-
-  echo "Creating ingress controller..."
-  kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
-  kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=90s
  
-  create_secrets 
+  create_ns_secrets 
   
   echo "Creating backend deployment..."
   kubectl apply -f kubManifest/backend-deployment.yaml -n sqldb
   echo "Creating backend clusterIP service..."
   kubectl apply -f kubManifest/backend-service.yaml -n sqldb
-  
   
   echo "Creating frontend deployment..."
   # For each app color version
@@ -77,16 +75,32 @@ start_ingress() {
   sed 's/{{APP_COLOR}}/pink/g' kubManifest/frontend-service.yaml | kubectl apply -f - -n webapp
   sed 's/{{APP_COLOR}}/red/g' kubManifest/frontend-service.yaml | kubectl apply -f - -n webapp
 
+  echo "Creating ingress controller..."
+  kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+  kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=90s
+
   echo "Creating frontend ingress service..."
   kubectl apply -f kubManifest/frontend-ingress.yaml -n webapp
+  echo "Blue app avalaible at <ip>/blue"
+  echo "Pink app avalaible at <ip>/pink"
+  echo "Red app defaults at <ip>"
 }
 
 start_versioning_ingress() {
   echo "Starting versioning with ingress..."
 }
 
+delete_resources() {
+  echo "Deleting Resources..."
+  kubectl delete all --all -n webapp
+  kubectl delete all --all -n sqldb
+  kubectl delete namespace webapp
+  kubectl delete namespace sqldb
+  kubectl delete all --all
+}
+
 stop_and_cleanup() {
-  echo "Removing cluster..."
+  echo "Deleting cluster..."
   kind delete cluster
 }
 
@@ -96,7 +110,8 @@ echo "2. Replica Sets"
 echo "3. Deployments"
 echo "4. Ingress"
 echo "5. Versioning using Ingress"
-echo "6. Delete cluster"
+echo "6. Delete Resources"
+echo "7. Delete Cluster"
 read -p "Enter your choice (1/2): " choice
 
 case "$choice" in
