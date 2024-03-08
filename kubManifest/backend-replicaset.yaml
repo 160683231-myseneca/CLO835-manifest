@@ -1,19 +1,19 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: ReplicaSet
 metadata:
-  name: mysql
+  name: mysql-db-replicaset
   namespace: sqldb
   labels:
     app.kubernetes.io/name: mysql
     app.kubernetes.io/component: backend
     app.kubernetes.io/part-of: employeeapp
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/name: mysql
       app.kubernetes.io/component: backend
       app.kubernetes.io/part-of: employeeapp
-  replicas: 1  
   template:
     metadata:
       labels:
