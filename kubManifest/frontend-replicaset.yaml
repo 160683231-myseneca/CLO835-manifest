@@ -32,7 +32,7 @@ spec:
         image: 636276102612.dkr.ecr.us-east-1.amazonaws.com/app_image
         env:
         - name: DBHOST
-          value: "mysql-service.sqldb.svc.cluster.local"
+          value: "mysql-svc.sqldb.svc.cluster.local"
         - name: DBPWD
           valueFrom:
             secretKeyRef:

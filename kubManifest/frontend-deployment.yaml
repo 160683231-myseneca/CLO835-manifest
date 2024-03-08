@@ -28,7 +28,7 @@ spec:
         app.kubernetes.io/version: {{APP_VERSION}}
     spec:
       containers:
-      - name: myapp-{APP_VERSION}}-pod
+      - name: myapp-{{APP_VERSION}}-pod
         image: 636276102612.dkr.ecr.us-east-1.amazonaws.com/app_image
         env:
         - name: DBHOST

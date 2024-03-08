@@ -9,24 +9,17 @@ spec:
   rules:
   - http:
       paths:
-      - path: /blue(/|$)(.*)
+      - path: /v1(/|$)(.*)
         pathType: ImplementationSpecific
         backend:
           service:
-            name: myapp-svc-blue
+            name: myapp-v1-svc
             port:
               number: 80
-      - path: /pink(/|$)(.*)
+      - path: /v2(/|$)(.*)
         pathType: ImplementationSpecific
         backend:
           service:
-            name: myapp-svc-pink
-            port:
-              number: 80
-      - path: /
-        pathType: ImplementationSpecific
-        backend:
-          service:
-            name: myapp-svc-red
+            name: myapp-v2-svc
             port:
               number: 80

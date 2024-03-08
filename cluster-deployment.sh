@@ -51,7 +51,9 @@ start_replicaset(){
   echo "Creating frontend clusterIP service..."
   kubectl apply -f kubManifest/frontend-service.yaml -n webapp
   
-  kubectl port-forward svc/myapp-v1-svc 30010:80 -n webapp
+  echo "Port forwarding..."
+  kubectl wait --for=condition=ready pod -l app.kubernetes.io/instance=myapp-v1 -n webapp --timeout=90s
+  kubectl port-forward --address 0.0.0.0 service/myapp-v1-svc 30010:80 -n webapp
   echo "App avalaible at <ip>:30010"
 }
 
@@ -62,11 +64,11 @@ start_nodeport_deployment() {
   kubectl apply -f kubManifest/backend-deployment.yaml -n sqldb
   
   echo "Creating frontend deployment..."
-  sed 's/{{APP_VERSION}}/v1/g' kubManifest/frontend-deployment.yaml | kubectl apply -f - -n webapp
+  sed "s/{{APP_VERSION}}/v1/g" kubManifest/frontend-deployment.yaml | kubectl apply -f - -n webapp
   
   echo "Creating frontend NodePort services..."
-  sed 's/{{APP_VERSION}}/v1/g; s/{{APP_CONTAINER}}/30010/g' kubManifest/frontend-NodePort.yaml | kubectl apply -f - -n webapp
-  echo "App avalaible at <ip>:30010"
+  sed "s/{{APP_VERSION}}/v1/g; s/{{APP_CONTAINER}}/30000/g" kubManifest/frontend-NodePort.yaml | kubectl apply -f - -n webapp
+  echo "App avalaible at <ip>:30000"
 }
 
 start_nodeport_version() {
@@ -76,8 +78,8 @@ start_nodeport_version() {
   sed 's/{{APP_VERSION}}/v2/g' kubManifest/frontend-deployment.yaml | kubectl apply -f - -n webapp
   
   echo "Creating frontend NodePort services for v2..."
-  sed 's/{{APP_VERSION}}/v2/g; s/{{APP_CONTAINER}}/30100/g' kubManifest/frontend-NodePort.yaml | kubectl apply -f - -n webapp
-  echo "Version2 app avalaible at <ip>:30100"
+  sed 's/{{APP_VERSION}}/v2/g; s/{{APP_CONTAINER}}/30001/g' kubManifest/frontend-NodePort.yaml | kubectl apply -f - -n webapp
+  echo "Version2 app avalaible at <ip>:30001"
 }
 
 start_ingress_version() {
@@ -106,7 +108,7 @@ start_ingress_version() {
 
   echo "Creating ingress controller..."
   kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
-  kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=90s
+  kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=100s
 
   echo "Creating frontend ingress service..."
   kubectl apply -f kubManifest/frontend-ingress.yaml -n webapp
@@ -155,7 +157,7 @@ case "$choice" in
     start_replicaset
     ;;
   "3")
-    start_deployment
+    start_nodeport_deployment
     ;;
   "4")
     start_nodeport_version
