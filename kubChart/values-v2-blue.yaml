@@ -1,0 +1,6 @@
+env:
+  version: v2
+  color: blue
+
+shared:
+  deploy: false

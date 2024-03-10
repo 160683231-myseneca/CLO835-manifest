@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "myapp.fullname" . }}
+  namespace: {{ .Values.metadata.namespace.frontend }}
+  labels:
+    {{- include "myapp.labels" . | nindent 4 }}
+  annotations:
+    meta.helm.sh/release-name: {{ .Release.Name }}
+    meta.helm.sh/release-namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "myapp.labels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "myapp.labels" . | nindent 8 }}
+      annotations:
+        meta.helm.sh/release-name: {{ .Release.Name }}
+        meta.helm.sh/release-namespace: {{ .Release.Namespace }}
+    spec:
+      containers:
+      - name: {{ include "myapp.fullname" . }}-pod
+        image: "{{ .Values.image.repository.frontend }}"
+        env:
+        - name: DBHOST
+          value: "{{ .Values.db.name }}-svc.{{ .Values.metadata.namespace.backend}}.svc.cluster.local"
+        - name: DBPWD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.app.component }}-secret
+              key: password
+        {{- if .Values.env.version }}
+        - name: VERSION
+          value: "{{ .Values.env.version }}"
+        {{- end }}
+        {{- if .Values.env.color }}
+        - name: APP_COLOR
+          value: "{{ .Values.env.color }}"
+        {{- end }}
+        ports:
+        - containerPort: {{ .Values.appservice.targetPort }}
+        resources:
+          requests:
+            cpu: {{ .Values.resources.requests.cpu }}
+            memory: {{ .Values.resources.requests.memory }}

@@ -1,0 +1,40 @@
+{{- if .Values.shared.deploy }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.db.name }}
+  namespace: {{ .Values.metadata.namespace.backend }}
+  labels:
+    {{- include "mysql.labels" . | nindent 4 }}
+  annotations:
+    meta.helm.sh/release-name: {{ .Release.Name }}
+    meta.helm.sh/release-namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "mysql.labels" . | nindent 6 }}
+  replicas: 1  
+  template:
+    metadata:
+      labels:
+        {{- include "mysql.labels" . | nindent 8 }}
+      annotations:
+        meta.helm.sh/release-name: {{ .Release.Name }}
+        meta.helm.sh/release-namespace: {{ .Release.Namespace }}
+    spec:
+      containers:
+      - name: {{ .Values.db.name }}-pod
+        image: "{{ .Values.image.repository.backend }}"
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.db.component }}-secret
+              key: password
+        ports:
+        - containerPort: {{ .Values.dbservice.targetPort }}
+        resources:
+          requests:
+            cpu: {{ .Values.resources.requests.cpu }}
+            memory: {{ .Values.resources.requests.memory }}
+{{- end }}

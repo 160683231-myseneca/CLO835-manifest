@@ -1,0 +1,6 @@
+env:
+  version: v1
+  color: pink
+   
+shared:
+  deploy: false

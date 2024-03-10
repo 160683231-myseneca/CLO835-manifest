@@ -1,5 +1,10 @@
 #!/bin/bash
-create_ns_secrets(){
+start_pod(){
+  echo "Starting kind cluster..."
+  kind create cluster --config kind-nodeport.yaml
+  
+  echo "Starting pods..."
+  
   echo "Creating namespaces..."
   kubectl create ns sqldb
   kubectl create ns webapp
@@ -8,17 +13,8 @@ create_ns_secrets(){
   echo "Enter MySQL root password:"
   read -s MYSQL_ROOT_PASSWORD
   
-  kubectl create secret generic mydb-secret --from-literal=password="$MYSQL_ROOT_PASSWORD" -n sqldb  
-  kubectl create secret generic mydb-secret --from-literal=password="$MYSQL_ROOT_PASSWORD" -n webapp  
-}
-
-start_pod(){
-  echo "Starting kind cluster..."
-  kind create cluster --config kind-nodeport.yaml
-  
-  echo "Starting pods..."
-  
-  create_ns_secrets
+  kubectl create secret generic mydb-secret-1 --from-literal=password="$MYSQL_ROOT_PASSWORD" --type=kubernetes.io/basic-auth -n sqldb  
+  kubectl create secret generic mydb-secret --from-literal=password="$MYSQL_ROOT_PASSWORD" --type=kubernetes.io/basic-auth -n webapp  
   
   echo "Creating backend pod..."
   kubectl apply -f kubManifest/backend-pod.yaml -n sqldb
@@ -82,71 +78,75 @@ start_nodeport_version() {
   echo "Version2 app avalaible at <ip>:30001"
 }
 
-start_ingress_version() {
-  delete_resources
+initialise_ingress_helm() {
+  echo "Cleaning up existing resources..."
   delete_cluster
   
-  echo "Starting versions using Ingress..."
+  echo "Initialising cluster with ingress..."
 
-  echo "Starting Ingress cluster..."
   kind create cluster --config kind-ingress.yaml
- 
-  create_ns_secrets 
   
-  echo "Creating backend deployment..."
-  kubectl apply -f kubManifest/backend-deployment.yaml -n sqldb
-  echo "Creating backend clusterIP service..."
-  kubectl apply -f kubManifest/backend-service.yaml -n sqldb
-  
-  echo "Creating frontend deployment..."
-  sed 's/{{APP_VERSION}}/v1/g' kubManifest/frontend-deployment.yaml | kubectl apply -f - -n webapp
-  sed 's/{{APP_VERSION}}/v2/g' kubManifest/frontend-deployment.yaml | kubectl apply -f - -n webapp
-  
-  echo "Creating frontend clusterIP services..."
-  sed 's/{{APP_VERSION}}/v1/g' kubManifest/frontend-service.yaml | kubectl apply -f - -n webapp
-  sed 's/{{APP_VERSION}}/v2/g' kubManifest/frontend-service.yaml | kubectl apply -f - -n webapp
-
   echo "Creating ingress controller..."
   kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
   kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=100s
+  
+  echo "Creating namespaces..."
+  kubectl create ns sqldb
+  kubectl create ns webapp
+  
+  echo "Initialising helm charts & sealed secrets..."
+    
+  echo "Creating sealed secrets controller..."
+  helm repo add sealed-secrets https://bitnami-labs.github.io/sealed-secrets
+  helm install sealed-secrets sealed-secrets/sealed-secrets -n kube-system --set-string fullnameOverride=sealed-secrets-controller 
+  
+  sleep 60s
+  kubectl create secret generic backend-secret --namespace sqldb --dry-run=client --from-literal=password=mytopsecret -o yaml | kubeseal --controller-name=sealed-secrets-controller --controller-namespace=kube-system --scope cluster-wide --format yaml > backend-secret.yaml
+  kubectl create secret generic frontend-secret --namespace webapp --dry-run=client --from-literal=password=mytopsecret -o yaml | kubeseal --controller-name=sealed-secrets-controller --controller-namespace=kube-system --scope cluster-wide --format yaml > frontend-secret.yaml
+}
 
-  echo "Creating frontend ingress service..."
-  kubectl apply -f kubManifest/frontend-ingress.yaml -n webapp
-  echo "Version1 avalaible at <ip>/v1"
-  echo "Version2 avalaible at <ip>/v2"
+start_ingress_version() {
+  
+  echo "Creating deployments..."
+  helm install web-v1 kubChart/ --values kubChart/values.yaml
+  helm install web-v2 kubChart/ --values kubChart/values.yaml -f kubChart/values-v2.yaml
+  helm install web-blue kubChart/ --values kubChart/values.yaml -f kubChart/values-blue.yaml
+  helm install web-pink kubChart/ --values kubChart/values.yaml -f kubChart/values-pink.yaml
+  helm install web-v2-blue kubChart/ --values kubChart/values.yaml -f kubChart/values-v2-blue.yaml
+  helm install web-v2-pink kubChart/ --values kubChart/values.yaml -f kubChart/values-v2-pink.yaml
+  helm ls --all-namespaces
+
+  echo "Choose paths: "
+    echo "<ip>/ < v1|v2 > / < red|blue|pink >"
+    echo "<ip>/ < red|blue|pink > / < v1|v2 >"
 }
 
 start_ingress_version_color() {
   echo "Starting version and color routing with ingress..."
 }
 
-delete_resources() {
-  echo "Deleting Resources..."
-  kubectl delete all --all -n webapp
-  kubectl delete all --all -n sqldb
-  kubectl delete namespace webapp
-  kubectl delete namespace sqldb
-}
-
 delete_cluster() {
   echo "Deleting cluster..."
+  kubectl delete secrets --all -n sqldb
+  kubectl delete secrets --all -n webapp
+  kubectl delete sealedsecrets --all -n sqldb
+  kubectl delete sealedsecrets --all -n webapp
+  kubectl delete namespace webapp
+  kubectl delete namespace sqldb
+    if [ -n "$(helm ls -q)" ]; then
+    echo "$(helm ls -q)" | xargs helm delete
+  fi
   kind delete cluster
-  docker stop $(docker ps -a -q)
-  docker rm $(docker ps -a -q)
-  docker rmi $(docker images -q)
-  docker volume rm $(docker volume ls -q)
-  docker network rm $(docker network ls -q)
 }
 
 echo "Select an action:"
 echo "1. Pods"
 echo "2. Replica Sets"
 echo "3. Deployment"
-echo "4. Nodeport - Version"
-echo "5. Ingress - Version"
-echo "6. Ingress - Version & Color"
-echo "7. Delete Resources"
-echo "8. Delete Cluster"
+echo "4. Nodeport - Version deployment"
+echo "5. Ingress, helm and sealed secrets"
+echo "6. Ingress - Version/color deployment"
+echo "7. Delete Cluster"
 read -p "Enter your choice (1/2): " choice
 
 case "$choice" in
@@ -163,19 +163,16 @@ case "$choice" in
     start_nodeport_version
     ;;
   "5")
-    start_ingress_version
+    initialise_ingress_helm
     ;;
   "6")
-    start_ingress_version_color
+    start_ingress_version
     ;;
   "7")
-    delete_resources
-    ;;
-  "8")
     delete_cluster
     ;;
   *)
-    echo "Invalid choice. Please select 1 - 6."
+    echo "Invalid choice. Please select 1 - 7."
     exit 1
     ;;
 esac
