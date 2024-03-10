@@ -1,0 +1,60 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: myapp-ingress
+  namespace: webapp
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: myapp-svc
+            port:
+              number: 80
+      - path: /v1/red(/|$)(.*)|/red/v1(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: myapp-svc
+            port:
+              number: 80
+      - path: /v2/red(/|$)(.*)|/red/v2(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: myapp-v2-svc
+            port:
+              number: 80
+      - path: /v2/blue(/|$)(.*)|/blue/v2(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: myapp-v2-blue-svc
+            port:
+              number: 80
+      - path: /v2/pink(/|$)(.*)|/pink/v2(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: myapp-v2-pink-svc
+            port:
+              number: 80
+      - path: /v1/blue(/|$)(.*)|/blue/v1(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: myapp-v1-blue-svc 
+            port:
+              number: 80
+      - path: /v1/pink(/|$)(.*)|/pink/v1(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: myapp-v1-pink-svc
+            port:
+              number: 80
