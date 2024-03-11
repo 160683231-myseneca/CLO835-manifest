@@ -12,7 +12,7 @@ image:
   pullPolicy: IfNotPresent
 
 env:
-  version: null
+  version: v1
   color: null
 
 app:
@@ -48,7 +48,7 @@ ingress:
   - name: v2-blue
     path: /v2/blue(/|$)(.*)|/blue/v2(/|$)(.*)
   - name: v1-pink
-    path: /v1/blue(/|$)(.*)|/blue/v1(/|$)(.*)
+    path: /v1/pink(/|$)(.*)|/pink/v1(/|$)(.*)
   - name: v2-pink
     path: /v2/pink(/|$)(.*)|/pink/v2(/|$)(.*)
   
