@@ -9,13 +9,15 @@ start_pod(){
   kubectl create ns sqldb
   kubectl create ns webapp
   
+  sleep 10s
   echo "Creating secrets"
   echo "Enter MySQL root password:"
   read -s MYSQL_ROOT_PASSWORD
   
-  kubectl create secret generic mydb-secret-1 --from-literal=password="$MYSQL_ROOT_PASSWORD" --type=kubernetes.io/basic-auth -n sqldb  
+  kubectl create secret generic mydb-secret --from-literal=password="$MYSQL_ROOT_PASSWORD" --type=kubernetes.io/basic-auth -n sqldb  
   kubectl create secret generic mydb-secret --from-literal=password="$MYSQL_ROOT_PASSWORD" --type=kubernetes.io/basic-auth -n webapp  
   
+  sleep 10s
   echo "Creating backend pod..."
   kubectl apply -f kubManifest/backend-pod.yaml -n sqldb
   
@@ -133,7 +135,7 @@ delete_cluster() {
   kubectl delete sealedsecrets --all -n webapp
   kubectl delete namespace webapp
   kubectl delete namespace sqldb
-    if [ -n "$(helm ls -q)" ]; then
+  if [ -n "$(helm ls -q)" ]; then
     echo "$(helm ls -q)" | xargs helm delete
   fi
   kind delete cluster
@@ -147,7 +149,7 @@ echo "4. Nodeport - Version deployment"
 echo "5. Ingress, helm and sealed secrets"
 echo "6. Ingress - Version/color deployment"
 echo "7. Delete Cluster"
-read -p "Enter your choice (1/2): " choice
+read -p "Enter your choice: " choice
 
 case "$choice" in
   "1")
